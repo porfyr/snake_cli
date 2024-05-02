@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "stdlib.h": "c",
+        "ioctl.h": "c",
+        "bitset": "c",
+        "string_view": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
