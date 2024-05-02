@@ -32,6 +32,7 @@ Snake* snake_new(Map *p_map)
 int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
 {
     // printf("Викликано додавання куска до змії\n");
+    udp_log("Викликано додавання куска до змії");
     Snake_part sp;
     sp.direction[0] = direction_r;
     sp.direction[1] = direction_c;

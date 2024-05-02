@@ -9,12 +9,11 @@
 
 #include "game_arch.h"
 
-#define PORT 12345
-#define BUFFER_SIZE 1024
+// #define PORT 12345
 
-int udp_log(int msg_len, char* msg) {
+int udp_log(const char* msg) {
 
-    char* hello = "hello from client";
+    // char* msg = "msg from client";
     struct sockaddr_in servaddr = {0};
     
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -25,10 +24,12 @@ int udp_log(int msg_len, char* msg) {
     }
 
     servaddr.sin_family = AF_INET; // IPv4
-    servaddr.sin_port = htons(12345);
+    servaddr.sin_port = htons(PORT);
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");  // INADDR_ANY; // 0.0.0.0 ?
 
-    int len = sendto(sockfd, (const char*)hello, strlen(hello), 0, (const struct sockaddr*)&servaddr, sizeof(servaddr));
+    int len = sendto(sockfd, (const char*)msg, strlen(msg)-20, 0, (const struct sockaddr*)&servaddr, sizeof(servaddr));
+
+    printf("strlen(msg) = %ld", strlen(msg));
 
     return 0;
 }

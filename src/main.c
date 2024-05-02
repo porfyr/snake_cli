@@ -44,8 +44,6 @@ void map_runtime(Map* p_map, Snake* p_snake, int proc_id) {
         printf("\x1b[d");
     }
     
-
-
     map_free(p_map);
     snake_free(p_snake);
 }
