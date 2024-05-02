@@ -55,6 +55,10 @@ size_t       sp_get_length(Node* head);
 void         sp_print_list(Node* head);
 void         sp_free_list(Node* head);
 
+////  UDP logger
+int udp_log(int msg_len, char* msg);
+
+
 // Render
 
 
