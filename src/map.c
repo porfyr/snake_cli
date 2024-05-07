@@ -1,6 +1,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+
 #include "game_arch.h"
 
 
@@ -85,7 +86,7 @@ void map_render_update(Map *p_map)
 void map_free(Map *p_map)
 {
     for (size_t i = 0; i < p_map->height; ++i) {
-        printf("Звільняєм %d\n", i);
+        printf("Звільняєм %ld\n", i);
         free(p_map->buffer[i]);
     }
     free(p_map->buffer);

@@ -1,8 +1,12 @@
 obj/
 
+bin/
+
 unused/
 
 test/
+
+# testing/
 
 trash/
 

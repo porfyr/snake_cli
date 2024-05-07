@@ -6,10 +6,16 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <stdarg.h>
 
 #include "game_arch.h"
 
 // #define PORT 12345
+
+// char* format_str(char* str, ...) {
+//     va_list args;
+//     va_start(args, )
+// }
 
 int udp_log(const char* msg) {
 
@@ -27,9 +33,9 @@ int udp_log(const char* msg) {
     servaddr.sin_port = htons(PORT);
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");  // INADDR_ANY; // 0.0.0.0 ?
 
-    int len = sendto(sockfd, (const char*)msg, strlen(msg)-20, 0, (const struct sockaddr*)&servaddr, sizeof(servaddr));
+    int len = sendto(sockfd, (const char*)msg, strlen(msg) /*BUFFER_SIZE*/, 0, (const struct sockaddr*)&servaddr, sizeof(servaddr));
 
-    printf("strlen(msg) = %ld", strlen(msg));
+    // printf("strlen(msg) = %ld", strlen(msg));
 
     return 0;
 }

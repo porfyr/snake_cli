@@ -46,7 +46,7 @@ static void sp_copy(Snake_part source, Snake_part* target) {
 Node* create_node(Snake_part data) {
     Node* new_node = (Node*)malloc(sizeof(Node));
     if (new_node == NULL) {
-        printf("Memory allocation failed\n");
+        udp_log("Memory allocation failed\n");
         exit(1);
     }
     sp_copy(data, &new_node->data);
@@ -60,7 +60,10 @@ Node* create_node(Snake_part data) {
 Node* sp_push(Node* head, Snake_part data) {
     Node* newNode = create_node(data);
     newNode->next = head;
-    printf("sp_push повертає новий вузол %d, %d\n", newNode->data.direction[0], newNode->data.direction[1]);
+    char msg[BUFFER_SIZE];
+    sprintf(msg, "sp_push повертає новий вузол %d, %d\n", newNode->data.direction[0], newNode->data.direction[1]);
+    udp_log(msg);
+    // printf("sp_push повертає новий вузол %d, %d\n", newNode->data.direction[0], newNode->data.direction[1]);
     return newNode;
 }
 
@@ -98,8 +101,10 @@ size_t sp_get_length(Node *head) {
 
 // static
 static void sp_print(Snake_part sp) {
-    printf("%d %d \tr: %ld \tc: %ld \tlen: %ld\n",
-        sp.direction[0], sp.direction[1], sp.coords[0], sp.coords[1], sp.length);
+    // printf("%d %d \tr: %ld \tc: %ld \tlen: %ld\n", sp.direction[0], sp.direction[1], sp.coords[0], sp.coords[1], sp.length);
+    char msg[BUFFER_SIZE];
+    sprintf(msg, "%d %d \tr: %ld \tc: %ld \tlen: %ld", sp.direction[0], sp.direction[1], sp.coords[0], sp.coords[1], sp.length);
+    udp_log(msg);
 }
 
 

@@ -28,6 +28,7 @@ void main(int argc, char **argv) {
     } else {
         map_runtime(p_map, p_snake, proc_id);
     }
+    return 0;
 }
 
 void map_runtime(Map* p_map, Snake* p_snake, int proc_id) {
@@ -54,31 +55,42 @@ void key_listener(Snake* p_snake, int proc_id) {
     int ch_i = 0;
     int direction_i = -1;
     int press_count = 0;
+    char msg[BUFFER_SIZE]; // костильовий виклик udp_log
  
     while ((direction_i = ch_reader(getch(), &ch_i)) != -1) {
         switch (direction_i) {
             case 0:
                 press_count ++;
-                printf("Up Arrow %d pressed %d\n", direction_i, press_count);
+                sprintf(msg, "Up Arrow %d pressed %d\n", direction_i, press_count);
+                udp_log(msg);
+                // printf("Up Arrow %d pressed %d\n", direction_i, press_count);
                 snake_add_part(p_snake, 1, 0);
                 break;
             case 1:
                 press_count ++;
-                printf("Right Arrow %d pressed %d\n", direction_i, press_count);
+                sprintf(msg, "Right Arrow %d pressed %d\n", direction_i, press_count);
+                udp_log(msg);
+                // printf("Right Arrow %d pressed %d\n", direction_i, press_count);
                 snake_add_part(p_snake, 0, 1);
                 break;
             case 2:
                 press_count ++;
-                printf("Down Arrow %d pressed %d\n", direction_i, press_count);
+                sprintf(msg, "Down Arrow %d pressed %d\n", direction_i, press_count);
+                udp_log(msg);
+                // printf("Down Arrow %d pressed %d\n", direction_i, press_count);
                 snake_add_part(p_snake, -1, 0);
                 break;
             case 3:
                 press_count ++;
-                printf("Left Arrow %d pressed %d\n", direction_i, press_count);
+                sprintf(msg, "Left Arrow %d pressed %d\n", direction_i, press_count);
+                udp_log(msg);
+                // printf("Left Arrow %d pressed %d\n", direction_i, press_count);
                 snake_add_part(p_snake, 0, -1);
                 break;
             case 404:
-                printf("помилка keypress %d pressed %d\n", direction_i, press_count);
+                sprintf(msg, "помилка keypress %d pressed %d\n", direction_i, press_count);
+                udp_log(msg);
+                // printf("помилка keypress %d pressed %d\n", direction_i, press_count);
                 break;
         }
     }

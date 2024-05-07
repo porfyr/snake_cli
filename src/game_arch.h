@@ -8,6 +8,7 @@
 
 // const short unsigned int INIT_LENGTH;
 #define INIT_LENGTH 4
+#define BUFFER_SIZE 255
 #define PORT 12345
 
 typedef struct {
@@ -57,6 +58,7 @@ void         sp_print_list(Node* head);
 void         sp_free_list(Node* head);
 
 //// UDP logger
+// char* format(const char* str);
 int udp_log(const char* msg);
 
 

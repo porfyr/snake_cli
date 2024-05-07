@@ -17,22 +17,23 @@ static void choose_init_direction(Snake snake, int* direction_r, int* direction_
 Snake* snake_new(Map *p_map)
 {
     Snake *p_snake = (Snake *)calloc(1, sizeof(Snake *));
-    printf("Експериментальна ініціалізація\n");
+    udp_log("Експериментальна ініціалізація\n");
     p_snake->p_map = p_map;
     int direction_r = 0, direction_c = 0;
     choose_init_direction(*p_snake, &direction_r, &direction_c);
     snake_add_part(p_snake, direction_r, direction_c);
     
-    printf("Вертаємо вказівник на змію (майже)\n");
-    printf("перша коорд. (щас довжина) змії %ld\n", p_snake->sp_head->data.length);
+    udp_log("Вертаємо вказівник на змію (майже)\n");
+    char msg[BUFFER_SIZE];
+    sprintf(msg, "перша коорд. (щас довжина) змії %ld\n", p_snake->sp_head->data.length);
+    udp_log(msg);
+    // printf("перша коорд. (щас довжина) змії %ld\n", p_snake->sp_head->data.length);
     return p_snake;
 }
 
-
 int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
 {
-    // printf("Викликано додавання куска до змії\n");
-    udp_log("Викликано додавання куска до змії");
+    udp_log("Викликано snake_add_part");
     Snake_part sp;
     sp.direction[0] = direction_r;
     sp.direction[1] = direction_c;
@@ -45,7 +46,10 @@ int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
         int ddr = cur_direction[0] + direction_r;
         int ddc = cur_direction[1] + direction_c;
         if (ddr == 2 || ddr == 0 || ddr == -2 || ddc == 2 || ddc == 0 || ddc == -2) {
-            printf("Поворот неумісний %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
+            // printf("Поворот неумісний %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
+            char msg[BUFFER_SIZE];
+            sprintf(msg, "поворот неумісний %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
+            udp_log(msg);
             return -1;
         } else {
             // printf("Поворот умісний %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
@@ -72,14 +76,17 @@ void snake_move_step(Snake *p_snake) {
     do {
         if (current->next == NULL) {
             if (current->data.length == 1) {
-                printf("Вичерпалась частинка змії\n");
+                udp_log("Вичерпалась частинка змії");
                 free(current);
             } else if (current->next != NULL && is_single_part) {
                 is_single_part = 0;
             }
                 // sp_shrink();
             if (!is_single_part) {
-                printf("Зменшуєм частинку на 1, %d\n", is_single_part);
+                char msg[BUFFER_SIZE];
+                sprintf(msg, "Зменшуєм частинку на 1, %d", is_single_part);
+                udp_log(msg);
+                // printf("Зменшуєм частинку на 1, %d\n", is_single_part);
                 current->data.length --;
             }
             // size_t coords[2] = {current->data.coords[0], current->data.coords[1]};
