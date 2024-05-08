@@ -72,7 +72,7 @@ void map_set_rand_point(Map *p_map)
 }
 
 
-void map_render_update(Map *p_map)
+void map_render(const Map* p_map)
 {
     for (size_t r = 0; r < p_map->height; ++r) {
         for (size_t c = 0; c < p_map->width; ++c) {
@@ -86,7 +86,7 @@ void map_render_update(Map *p_map)
 void map_free(Map *p_map)
 {
     for (size_t i = 0; i < p_map->height; ++i) {
-        printf("Звільняєм %ld\n", i);
+        udp_log("Звільняєм %ld", i);
         free(p_map->buffer[i]);
     }
     free(p_map->buffer);

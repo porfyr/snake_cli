@@ -29,8 +29,8 @@ typedef struct Node {
 } Node;
 
 typedef struct {
-    Map *p_map;
-    struct Node *sp_head;   // Linked list queue
+    Map*  p_map;
+    Node* sp_head;   // Linked list queue
 } Snake;
 
 
@@ -39,7 +39,7 @@ Map* map_new();
 void map_fill(Map *p_map, char chr);
 void map_fill_with_border(Map* p_map);
 void map_set_rand_point(Map* p_map);
-void map_render_update(Map* p_map);
+void map_render(const Map* p_map);
 void map_free(Map* p_map);
 
 //// Snake manipulation functions
@@ -59,7 +59,7 @@ void         sp_free_list(Node* head);
 
 //// UDP logger
 // char* format(const char* str);
-int udp_log(const char* msg);
+int udp_log(char* msg, ...);
 
 
 //// Render

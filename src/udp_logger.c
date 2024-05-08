@@ -17,7 +17,13 @@
 //     va_start(args, )
 // }
 
-int udp_log(const char* msg) {
+int udp_log(char* format, ...) {
+
+    va_list args;
+    va_start(args, format);
+    char msg[BUFFER_SIZE];
+    vsprintf(msg, format, args);
+    va_end(args);
 
     // char* msg = "msg from client";
     struct sockaddr_in servaddr = {0};
