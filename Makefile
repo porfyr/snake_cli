@@ -1,14 +1,13 @@
+# Main snake program
+
 CC = gcc
 CFLAGS = -Wall -Wno-unused-variable -Wno-unused-function -Wno-main # -lcurses # -Wextra -g
 SRC_DIR = ./src
 OBJ_DIR = ./obj
 BIN_DIR = ./bin
 TARGET = $(BIN_DIR)/snake_c
-SERVER  = $(BIN_DIR)/server_bin
-TESTING_DIR = ./testing
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
-
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 all: $(BIN_DIR) $(TARGET) $(OBJ_DIR)
@@ -38,6 +37,14 @@ clean-objects:
 clear-bins:
 	rm -f $(BIN_DIR)/
 
+
+
+
+# Another program client server for capturing logs from snake program
+
+SERVER  = $(BIN_DIR)/server_bin
+TESTING_DIR = ./testing
+
 $(SERVER): $(TESTING_DIR)/server.c
 	$(CC) $^ -o $@
 
@@ -46,8 +53,24 @@ server: $(SERVER)
 server-run: $(SERVER)
 	./$(SERVER)
 
-#test:
-#	./$(TARGET) # Припустимо, що my_program - це програма, яка потребує запуску для тестування
+
+
+
+# Plaugound for testing features of C language
+
+PLAYGROUND_DIR = ../playground
+
+file-name ?=
+playground-run: 
+	$(CC) $(PLAYGROUND_DIR)/$(file-name) -o $(PLAYGROUND_DIR)/bin
+	./$(PLAYGROUND_DIR)/bin
+
+playground-clear:
+	rm $(PLAYGROUND_DIR)/bin
+
+
+
+
 
 help:
 	@echo "Available targets:"

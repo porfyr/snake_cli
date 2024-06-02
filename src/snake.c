@@ -40,7 +40,7 @@ int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
         sp.coords[1] = (rand() % p_snake->p_map->width-1) + 1;
         sp.length = INIT_LENGTH;
     } else {
-        p_snake->p_map->buffer[p_snake->sp_head->data.coords[0]+direction_r][p_snake->sp_head->data.coords[1]+direction_c] = '%';
+        // p_snake->p_map->buffer[p_snake->sp_head->data.coords[0]+direction_r][p_snake->sp_head->data.coords[1]+direction_c] = '%';
         
         int cur_direction[2] = {p_snake->sp_head->data.direction[0], p_snake->sp_head->data.direction[1]};
         int ddr = cur_direction[0] + direction_r;
@@ -50,30 +50,23 @@ int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
             return -1;
         } else {
             udp_log("Додаєм новий кусок");
-            p_snake->p_map->buffer[p_snake->sp_head->data.coords[0] + direction_r*2][p_snake->sp_head->data.coords[1] + direction_c*2] = '@';
-            p_snake->p_map->buffer[10][10] = '@';
             for (int i = 0; i < 10; ++i) {
                 map_set_rand_point(p_snake->p_map);
             }
-            // printf("Поворот умісний %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
-            sp.coords[0] = p_snake->sp_head->data.coords[0] + direction_r;
-            sp.coords[1] = p_snake->sp_head->data.coords[1] + direction_c;
-            sp.length = 1;
+            sp.coords[0] = p_snake->sp_head->data.coords[0];// + direction_r;
+            sp.coords[1] = p_snake->sp_head->data.coords[1];// + direction_c;
+            sp.length = 0;
             // p_snake->sp_head = sp_push(p_snake->sp_head, sp);
         }
     }
     p_snake->sp_head = sp_push(p_snake->sp_head, sp);
-    p_snake->p_map->buffer[10][10] = '@';
-    udp_log("%c", p_snake->p_map->buffer[10][10]);
-    udp_log("(add) p_snake %d p_map %d", p_snake, p_snake->p_map);
-    udp_log("Друк з (add)");
-    sp_print_list(p_snake->sp_head);
+    // udp_log("Друк з (add)");
+    // sp_print_list(p_snake->sp_head);
     return 0;
 }
 
 
 void snake_move_step(Snake *p_snake) {
-    udp_log("(move) p_map %d", p_snake->p_map);
     Node* current_sp = p_snake->sp_head;
     current_sp->data.coords[0] += current_sp->data.direction[0];
     current_sp->data.coords[1] += current_sp->data.direction[1];
@@ -83,9 +76,8 @@ void snake_move_step(Snake *p_snake) {
     int is_first_part = 1;
 
     int i = 0;
-    // Node* prev_sp;   // Якщо не працюватиме вичерпання куска змії
+    Node* prev_sp = NULL;   // Якщо не працюватиме вичерпання куска змії
     while (current_sp != NULL) {
-        udp_log("поворухнувся кусок %d", i++);
         // Якщо цей кусок перший
         if (is_first_part) {
             // Якщо цей кусок має наступні
@@ -106,21 +98,16 @@ void snake_move_step(Snake *p_snake) {
         else if (current_sp->next == NULL) {
             // Якщо цей кусок має довжину 1 й не перший
             if (current_sp->data.length == 1) {
-                udp_log("Вичерпалась частинка змії");
 
+                p_snake->p_map->buffer[current_sp->data.coords[0]][current_sp->data.coords[1]] = ' ';
                 free(current_sp);
                 current_sp = NULL;
-                // prev_sp->next = NULL;
-                // break;
+                prev_sp->next = NULL;
+                break;
             }
-            // /*
-            // Якщо цей крок перший чи не останній
             else {
-                udp_log("Зменшуєм частинку на 1");
-
                 current_sp->data.length --;
             }
-            // */
         }
 
         // Якщо цей кусок останній й пофіг чи перший (прибирання за хвостиком)
@@ -132,9 +119,9 @@ void snake_move_step(Snake *p_snake) {
             p_snake->p_map->buffer[r-r_diff][c-c_diff] = ' ';
         }
 
-        // рух до наступного куска
+        // рух до наступного куска, якщо
         if (current_sp != NULL) {
-            // prev_sp = current_sp;    // Якщо не працюватиме вичерпання куска змії
+            prev_sp = current_sp;    // Якщо не працюватиме вичерпання куска змії
             current_sp = current_sp->next;
         }
     }
@@ -142,13 +129,11 @@ void snake_move_step(Snake *p_snake) {
 
 
 void snake_sync_map(Snake snake) {
-    udp_log("(sync) p_map %d", snake.p_map);
-    udp_log("друк змії з (sync)");
-    sp_print_list(snake.sp_head);
+    // udp_log("друк змії з (sync)");
+    // sp_print_list(snake.sp_head);
     Node* current_sp = snake.sp_head;
     int i = 0;
     while (current_sp != NULL) {
-        udp_log("синхронізувалась частинка %d", i++);
         for (
                 int i = 0, r = current_sp->data.coords[0], c = current_sp->data.coords[1];
                 i < current_sp->data.length;
