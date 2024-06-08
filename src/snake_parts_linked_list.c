@@ -34,8 +34,7 @@ Node* create_node(Snake_part data) {
 Node* sp_push(Node* head, Snake_part data) {
     Node* newNode = create_node(data);
     newNode->next = head;
-    udp_log("sp_push повертає новий вузол, direction (r c): %d, %d", newNode->data.direction[0], newNode->data.direction[1]);
-    // printf("sp_push повертає новий вузол %d, %d\n", newNode->data.direction[0], newNode->data.direction[1]);
+    // udp_log("sp_push повертає новий вузол, direction (r c): %d, %d", newNode->data.direction[0], newNode->data.direction[1]);
     return newNode;
 }
 
@@ -80,7 +79,6 @@ static void sp_print(Snake_part sp, int i) {
 
 void sp_print_list(Node* head) {
     Node *current = head;
-    // udp_log("друк інфи про куски змії");
     int i = 0;
     while (current != NULL) {
         sp_print(current->data, i);

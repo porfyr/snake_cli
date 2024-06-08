@@ -1,8 +1,11 @@
 #include "game_arch.h"
 
 
-static void choose_init_direction(Snake snake, int* direction_r, int* direction_c)
-{
+static int  snake_check_food_collision(const Snake *p_snake, size_t food_r, size_t food_c);
+static void snake_sync_map(const Snake *p_snake);
+
+
+static void choose_init_direction(Snake snake, int *direction_r, int *direction_c) {
     // Тут мало б повертати напрямок протилежний до найближчого краю
     // Перед тим приймало // Map *p_map, size_t snake_row, size_t snake_col
     *direction_r = 0;
@@ -22,75 +25,101 @@ Snake* snake_new(Map *p_map)
     int direction_r = 0, direction_c = 0;
     choose_init_direction(*p_snake, &direction_r, &direction_c);
     snake_add_part(p_snake, direction_r, direction_c);
-    
-    // udp_log("Вертаємо вказівник на змію (майже)");
-    // udp_log("перша коорд. (щас довжина) змії %ld\n", p_snake->sp_head->data.length);
+    snake_map_set_food(p_snake);
+
     return p_snake;
 }
 
 
 int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
 {
-    udp_log("Викликано snake_add_part");
     Snake_part sp;
     sp.direction[0] = direction_r;
     sp.direction[1] = direction_c;
     if (p_snake->sp_head == NULL) {
-        sp.coords[0] = (rand() % p_snake->p_map->height-1) + 1;
-        sp.coords[1] = (rand() % p_snake->p_map->width-1) + 1;
+        sp.coords[0] = (rand() % p_snake->p_map->height-2) + 2;
+        sp.coords[1] = (rand() % p_snake->p_map->width-2) + 2;
         sp.length = INIT_LENGTH;
     } else {
-        // p_snake->p_map->buffer[p_snake->sp_head->data.coords[0]+direction_r][p_snake->sp_head->data.coords[1]+direction_c] = '%';
-        
         int cur_direction[2] = {p_snake->sp_head->data.direction[0], p_snake->sp_head->data.direction[1]};
+        // dd{r/c} - difference direction row/column
         int ddr = cur_direction[0] + direction_r;
         int ddc = cur_direction[1] + direction_c;
         if (ddr == 2 || ddr == 0 || ddr == -2 || ddc == 2 || ddc == 0 || ddc == -2) {
-            udp_log("поворот неумісний"); // %d %d : %d %d\n", cur_direction[0], cur_direction[1], direction_r, direction_c);
             return -1;
         } else {
-            udp_log("Додаєм новий кусок");
-            for (int i = 0; i < 10; ++i) {
-                map_set_rand_point(p_snake->p_map);
+            for (int i = 0; i < 3; ++i) {
+                // snake_map_set_food(p_snake);
             }
-            sp.coords[0] = p_snake->sp_head->data.coords[0];// + direction_r;
-            sp.coords[1] = p_snake->sp_head->data.coords[1];// + direction_c;
+            sp.coords[0] = p_snake->sp_head->data.coords[0];
+            sp.coords[1] = p_snake->sp_head->data.coords[1];
             sp.length = 0;
-            // p_snake->sp_head = sp_push(p_snake->sp_head, sp);
         }
     }
     p_snake->sp_head = sp_push(p_snake->sp_head, sp);
-    // udp_log("Друк з (add)");
-    // sp_print_list(p_snake->sp_head);
+
     return 0;
 }
 
 
-void snake_move_step(Snake *p_snake) {
+static int snake_check_food_collision(const Snake *p_snake, size_t food_r, size_t food_c)
+{
+    // udp_log("достукався в провірку колізії");
+    int is_collision = 0;
+
+    Node *current_sp = p_snake->sp_head;
+    while (current_sp != NULL) {
+        for (
+                int i = 0, r = current_sp->data.coords[0], c = current_sp->data.coords[1];
+                i < current_sp->data.length;
+                ++i,
+                r -= current_sp->data.direction[0],
+                c -= current_sp->data.direction[1]
+            ) {
+                if (food_r == r && food_c == c)
+                    is_collision = 1;
+        }
+        current_sp = NULL;
+    }
+    // if (is_collision) udp_log("провірку колізії не пройдено");
+
+    return is_collision;
+}
+
+
+void snake_map_set_food(const Snake *p_snake)
+{
+    srand(time(NULL));
+    int rand_row, rand_col;
+    int done = 0;
+    while (!done) {
+        rand_row = (rand() % p_snake->p_map->height-1) + 1;
+        rand_col = (rand() % p_snake->p_map->width-1) + 1;
+        if (!snake_check_food_collision(p_snake, rand_row, rand_col))
+            done = 1;
+    }
+    p_snake->p_map->food_coords[0] = rand_row;
+    p_snake->p_map->food_coords[1] = rand_col;
+    p_snake->p_map->buffer[rand_row][rand_col] = '*';
+}
+
+
+void snake_move_step(Snake *p_snake)
+{
     Node* current_sp = p_snake->sp_head;
     current_sp->data.coords[0] += current_sp->data.direction[0];
     current_sp->data.coords[1] += current_sp->data.direction[1];
-    // if (p_snake->sp_head->next != NULL) {
-    //     p_snake->sp_head->data.length ++;
-    // }
-    int is_first_part = 1;
+    if (p_snake->p_map->buffer[current_sp->data.coords[0]][current_sp->data.coords[1]] == '*') {
+        udp_log("схавав");
+        snake_map_set_food(p_snake);
+    }
 
-    int i = 0;
-    Node* prev_sp = NULL;   // Якщо не працюватиме вичерпання куска змії
+    int is_first_part = 1;
+    Node *prev_sp = NULL;
     while (current_sp != NULL) {
-        // Якщо цей кусок перший
         if (is_first_part) {
-            // Якщо цей кусок має наступні
             if (current_sp->next != NULL) {
-                // current_sp->data.coords[0] += current_sp->data.direction[0];
-                // current_sp->data.coords[1] += current_sp->data.direction[1];
                 current_sp->data.length ++;
-            }
-            // Якщо цей кусок перший і останній
-            else {
-                // current_sp->data.coords[0] += current_sp->data.direction[0];
-                // current_sp->data.coords[1] += current_sp->data.direction[1];
-                ;
             }
             is_first_part = 0;
         }
@@ -110,6 +139,30 @@ void snake_move_step(Snake *p_snake) {
             }
         }
 
+        // рух до наступного куска, якщо
+        if (current_sp != NULL) {
+            prev_sp = current_sp;
+            current_sp = current_sp->next;
+        }
+    }
+    snake_sync_map(p_snake);
+}
+
+
+static void snake_sync_map(const Snake *p_snake)
+{
+    Node *current_sp = p_snake->sp_head;
+    while (current_sp != NULL) {
+        for (
+                int i = 0, r = current_sp->data.coords[0], c = current_sp->data.coords[1];
+                i < current_sp->data.length;
+                ++i,
+                r -= current_sp->data.direction[0],
+                c -= current_sp->data.direction[1]
+            ) {
+                p_snake->p_map->buffer[r][c] = '#';
+        }
+
         // Якщо цей кусок останній й пофіг чи перший (прибирання за хвостиком)
         if (current_sp->next == NULL) {
             size_t r = current_sp->data.coords[0];
@@ -119,36 +172,12 @@ void snake_move_step(Snake *p_snake) {
             p_snake->p_map->buffer[r-r_diff][c-c_diff] = ' ';
         }
 
-        // рух до наступного куска, якщо
-        if (current_sp != NULL) {
-            prev_sp = current_sp;    // Якщо не працюватиме вичерпання куска змії
-            current_sp = current_sp->next;
-        }
-    }
-}
-
-
-void snake_sync_map(Snake snake) {
-    // udp_log("друк змії з (sync)");
-    // sp_print_list(snake.sp_head);
-    Node* current_sp = snake.sp_head;
-    int i = 0;
-    while (current_sp != NULL) {
-        for (
-                int i = 0, r = current_sp->data.coords[0], c = current_sp->data.coords[1];
-                i < current_sp->data.length;
-                ++i
-            )
-        {
-            snake.p_map->buffer[r][c] = '#';
-            r -= current_sp->data.direction[0];
-            c -= current_sp->data.direction[1];
-        }
         current_sp = current_sp->next;
     }
 }
 
 
-void snake_free(Snake* p_snake) {
+void snake_free(Snake *p_snake)
+{
     sp_free_list(p_snake->sp_head);
 }

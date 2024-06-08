@@ -1,8 +1,10 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
-// #include <string.h>
+
+#include <string.h>
 #include <time.h>
 // #include <errno.h>
 
@@ -15,6 +17,8 @@ typedef struct {
     size_t height;
     size_t width;
     char **buffer;
+    pthread_mutex_t *p_mutex;
+    size_t food_coords[2];
 } Map;
 
 typedef struct {
@@ -25,29 +29,32 @@ typedef struct {
 
 typedef struct Node {
     Snake_part data;
-    struct Node* next;
+    struct Node *next;
 } Node;
 
 typedef struct {
     Map*  p_map;
-    Node* sp_head;   // Linked list queue
+    Node *sp_head;   // Linked list queue
+    int scores;
 } Snake;
 
 
+//// two thread functions 
+void* map_runtime(void* vp_snake);
+void* key_listener(void* vp_snake);
+
 //// Map functions
-Map* map_new();
-void map_fill(Map *p_map, char chr);
-void map_fill_with_border(Map* p_map);
-void map_set_rand_point(Map* p_map);
-void map_render(const Map* p_map);
+Map* map_new(pthread_mutex_t *p_mutex);
+void map_fill_with_border(Map *p_map);
+void map_render(const Map *p_map);
 void map_free(Map* p_map);
 
 //// Snake manipulation functions
-int    snake_add_part(Snake* p_snake, int dir_r, int dir_c);
-Snake* snake_new(Map* p_map);
+int    snake_add_part(Snake *p_snake, int dir_r, int dir_c);
+Snake* snake_new(Map *p_map);
+void   snake_map_set_food(const Snake *p_snake);
 void   snake_move_step(Snake *p_snake);
-void   snake_sync_map(Snake snake);
-void   snake_free(Snake* p_snake);
+void   snake_free(Snake *p_snake);
 
 //// linked list functions in "snake_parts_ll.c"
 Node*        sp_push(Node* head, Snake_part data);
@@ -59,7 +66,7 @@ void         sp_free_list(Node* head);
 
 //// UDP logger
 // char* format(const char* str);
-int udp_log(char* msg, ...);
+int udp_log(char *msg, ...);
 
 
 //// Render

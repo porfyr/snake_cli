@@ -1,13 +1,13 @@
 #include <string.h>
+#include <pthread.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 
 #include "game_arch.h"
 
 
-Map *map_new()
+Map* map_new(pthread_mutex_t *p_mutex)
 {
-
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
@@ -20,6 +20,7 @@ Map *map_new()
     p_map->height = height;
     p_map->width = width;
     p_map->buffer = (char **)calloc(height, sizeof(char *));
+    p_map->p_mutex = p_mutex;
     if (p_map->buffer == NULL)
         perror("Помилка виділення пам'яті під буфер");
     for (size_t i = 0; i < height; ++i) {
@@ -32,7 +33,7 @@ Map *map_new()
 }
 
 
-void map_fill(Map *p_map, char chr)
+static void map_fill(Map *p_map, char chr)
 {
     for (size_t r = 0; r < p_map->height; ++r) {
         // // Щось через наступний рядок при очищенні крашилось
@@ -40,7 +41,6 @@ void map_fill(Map *p_map, char chr)
         for (size_t c = 0; c < p_map->width; ++c) {
             p_map->buffer[r][c] = chr;
         }
-        
     }
 }
 
@@ -63,16 +63,7 @@ void map_fill_with_border(Map *p_map)
 }
 
 
-void map_set_rand_point(Map *p_map)
-{
-    srand(time(NULL));
-    int rand_row = (rand() % p_map->height-1) + 1;
-    int rand_col = (rand() % p_map->width-1) + 1;
-    p_map->buffer[rand_row][rand_col] = '*';
-}
-
-
-void map_render(const Map* p_map)
+void map_render(const Map *p_map)
 {
     for (size_t r = 0; r < p_map->height; ++r) {
         for (size_t c = 0; c < p_map->width; ++c) {
@@ -86,7 +77,7 @@ void map_render(const Map* p_map)
 void map_free(Map *p_map)
 {
     for (size_t i = 0; i < p_map->height; ++i) {
-        udp_log("Звільняєм %ld", i);
+        udp_log("Звільняєм %ld / %ld", i, p_map->height);
         free(p_map->buffer[i]);
     }
     free(p_map->buffer);
