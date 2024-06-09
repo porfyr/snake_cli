@@ -1,3 +1,7 @@
-для запуску ```make run```
+# Snake game for unix cli
+contains udp server loger and uses threads
+for compile & run ```make run```
+for catching logs ```make server-run``` in another terminal
+press ```q``` to quit and ```arrows``` to direct snake
 
-сервер для прийому й виводу логів запускається ```make server-run```
+![gif with snake]()

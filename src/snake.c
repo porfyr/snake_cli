@@ -13,7 +13,7 @@ static void choose_init_direction(Snake snake, int *direction_r, int *direction_
 Snake* snake_new(Map *p_map, pthread_mutex_t *controls_mutex)
 {
     Snake *p_snake = (Snake *)malloc(sizeof(Snake));
-    udp_log("\n\n\n______________________________\n\nЕкспериментальна ініціалізація");
+    udp_log("\n\n\n____\n\ninit");
     p_snake->p_map = p_map;
     int direction_r = 0, direction_c = 0;
     p_snake->controls_mutex = controls_mutex;
@@ -85,8 +85,8 @@ void snake_map_set_food(const Snake *p_snake)
     int rand_row, rand_col;
     int done = 0;
     while (!done) {
-        rand_row = (rand() % p_snake->p_map->height-2) + 1;
-        rand_col = (rand() % p_snake->p_map->width-2) + 1;
+        rand_row = (rand() % p_snake->p_map->height-3) + 2;
+        rand_col = (rand() % p_snake->p_map->width-3) + 2;
         if (!snake_check_food_collision(p_snake, rand_row, rand_col))
             done = 1;
     }
