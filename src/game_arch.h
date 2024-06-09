@@ -8,7 +8,6 @@
 #include <time.h>
 // #include <errno.h>
 
-// const short unsigned int INIT_LENGTH;
 #define INIT_LENGTH 3
 #define BUFFER_SIZE 255
 #define PORT 12345
@@ -18,12 +17,11 @@ typedef struct {
     size_t height;
     size_t width;
     char **buffer;
-    pthread_mutex_t *p_mutex;
     size_t food_coords[2];
 } Map;
 
 typedef struct {
-    int direction[2];  // [0]: vertical (row) [1]: horizonal (collumn)
+    int direction[2];  // [0] - vertical (row), [1] - horizonal (collumn)
     size_t coords[2]; //
     size_t length;
 } Snake_part;
@@ -35,9 +33,11 @@ typedef struct Node {
 
 typedef struct {
     Map*  p_map;
-    Node *sp_head;   // Linked list queue
-    int scores;
+    Node *sp_head;   // sp - snake part - linked list node
+    int scores;     // no score counting
     pthread_mutex_t *controls_mutex;
+    int still_playing;
+    int quited;
 } Snake;
 
 
@@ -46,7 +46,7 @@ void* map_runtime(void* vp_snake);
 void* controls(void* vp_snake);
 
 //// Map functions
-Map* map_new(pthread_mutex_t *p_mutex);
+Map* map_new();
 void map_fill_with_border(Map *p_map);
 void map_render(const Map *p_map);
 void map_free(Map* p_map);
@@ -69,12 +69,3 @@ void         sp_free_list(Node* head);
 //// UDP logger
 // char* format(const char* str);
 int udp_log(char *msg, ...);
-
-
-//// Render
-
-
-
-
-
-

@@ -6,7 +6,7 @@
 #include "game_arch.h"
 
 
-Map* map_new(pthread_mutex_t *p_mutex)
+Map* map_new()
 {
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -20,7 +20,6 @@ Map* map_new(pthread_mutex_t *p_mutex)
     p_map->height = height;
     p_map->width = width;
     p_map->buffer = (char **)calloc(height, sizeof(char *));
-    p_map->p_mutex = p_mutex;
     if (p_map->buffer == NULL)
         perror("error allocating buffer memory");
     for (size_t i = 0; i < height; ++i) {
@@ -33,22 +32,11 @@ Map* map_new(pthread_mutex_t *p_mutex)
 }
 
 
-static void map_fill(Map *p_map, char chr)
-{
-    for (size_t r = 0; r < p_map->height; ++r) {
-        // // Щось через наступний рядок при очищенні крашилось
-        memset(p_map->buffer[r], chr, p_map->width * sizeof(char));
-        // // older method
-        // for (size_t c = 0; c < p_map->width; ++c) {
-        //     p_map->buffer[r][c] = chr;
-        // }
-    }
-}
-
-
 void map_fill_with_border(Map *p_map)
 {
-    map_fill(p_map, ' ');
+    for (size_t r = 0; r < p_map->height; ++r) {
+        memset(p_map->buffer[r], ' ', p_map->width * sizeof(char));
+    }
     for (size_t r = 0; r < p_map->height; ++r) {
         p_map->buffer[r][0] = '|';
         p_map->buffer[r][p_map->width-1] = '|';

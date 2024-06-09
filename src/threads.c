@@ -7,9 +7,9 @@
 #include "game_arch.h"
 
 
-static int ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]);
-static int getch();
-static int game_over();
+static int  ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]);
+static int  getch();
+static void game_over(Snake *p_snake);
 
 void* map_runtime(void* vp_snake)
 {
@@ -17,32 +17,28 @@ void* map_runtime(void* vp_snake)
 
     Snake *p_snake = (Snake*) vp_snake;
     
-    pthread_mutex_t *p_map_mutex = p_snake->p_map->p_mutex;
-    pthread_mutex_lock(p_map_mutex);
+    pthread_t t_controls;
+    pthread_create(&t_controls , NULL, &controls, p_snake);
+
     map_fill_with_border(p_snake->p_map);
     snake_map_set_food(p_snake);
-    pthread_mutex_unlock(p_map_mutex);
 
-    udp_log("map inited");
-
-    for (int continue_loop = 1; continue_loop; ) {
-        pthread_mutex_lock(p_map_mutex); // maybe it is useless
-        continue_loop = snake_move_step(p_snake);
-        pthread_mutex_unlock(p_map_mutex);
+    while (p_snake->still_playing) {
+        p_snake->still_playing = snake_move_step(p_snake);
         map_render(p_snake->p_map);
         usleep(FRAME_DURATION); // miliseconds
         pthread_mutex_unlock(p_snake->controls_mutex);
         printf("\x1b[d");
     }
     
+    pthread_cancel(t_controls);
+    // pthread_join(t_controls, NULL);
     game_over(p_snake);
 
     map_free(p_snake->p_map);
     snake_free(p_snake);
 
-    udp_log("Все позвільняв");
-
-    return 0;
+    return time_to_quit;
 }
 
 void* controls(void* vp_snake)
@@ -50,13 +46,12 @@ void* controls(void* vp_snake)
     void* time_to_quit = NULL;
 
     Snake *p_snake = (Snake*) vp_snake;
-    pthread_mutex_t *p_map_mutex = p_snake->p_map->p_mutex;
     
     char ch_arr[10];
     int ch_i = 0;
     int direction_i = -1;
     int press_count = 0;
- 
+
     while ((direction_i = ch_reader(getch(), &ch_i, &ch_arr)) != -1) {
         switch (direction_i) {
             case 0:     // Up
@@ -76,7 +71,8 @@ void* controls(void* vp_snake)
                 snake_add_part(p_snake, 0, -1);
                 break;
             case 4:     // got 'q', must quit
-                return time_to_quit;
+                p_snake->still_playing = 0;
+                p_snake->quited = 1;
                 break;
             case 404:
                 udp_log("помилка keypress %d pressed %d\n", direction_i, press_count);
@@ -141,11 +137,14 @@ static int getch()
    return ch;
 }
 
-static int game_over(Snake *p_snake)
+static void game_over(Snake *p_snake)
 {
     printf("\x1b[d");
     printf("\x1b[2J");
-    printf("game over");
+    if (p_snake->quited)
+        printf("gg\n");
+    else
+        printf("game over\n");
 }
 
 
