@@ -9,9 +9,10 @@
 // #include <errno.h>
 
 // const short unsigned int INIT_LENGTH;
-#define INIT_LENGTH 4
+#define INIT_LENGTH 3
 #define BUFFER_SIZE 255
 #define PORT 12345
+#define FRAME_DURATION 200000 // miliseconds
 
 typedef struct {
     size_t height;
@@ -36,12 +37,13 @@ typedef struct {
     Map*  p_map;
     Node *sp_head;   // Linked list queue
     int scores;
+    pthread_mutex_t *controls_mutex;
 } Snake;
 
 
 //// two thread functions 
 void* map_runtime(void* vp_snake);
-void* key_listener(void* vp_snake);
+void* controls(void* vp_snake);
 
 //// Map functions
 Map* map_new(pthread_mutex_t *p_mutex);
@@ -51,9 +53,9 @@ void map_free(Map* p_map);
 
 //// Snake manipulation functions
 int    snake_add_part(Snake *p_snake, int dir_r, int dir_c);
-Snake* snake_new(Map *p_map);
+Snake* snake_new(Map *p_map, pthread_mutex_t *controls_mutex);
 void   snake_map_set_food(const Snake *p_snake);
-void   snake_move_step(Snake *p_snake);
+int    snake_move_step(Snake *p_snake);
 void   snake_free(Snake *p_snake);
 
 //// linked list functions in "snake_parts_ll.c"

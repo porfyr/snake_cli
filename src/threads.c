@@ -9,33 +9,48 @@
 
 static int ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]);
 static int getch();
+static int game_over();
 
-void* map_runtime(void* vp_snake) {
+void* map_runtime(void* vp_snake)
+{
+    void* time_to_quit = NULL;
+
     Snake *p_snake = (Snake*) vp_snake;
-    pthread_mutex_t *p_mutex = p_snake->p_map->p_mutex;
-    pthread_mutex_lock(p_mutex);
+    
+    pthread_mutex_t *p_map_mutex = p_snake->p_map->p_mutex;
+    pthread_mutex_lock(p_map_mutex);
     map_fill_with_border(p_snake->p_map);
     snake_map_set_food(p_snake);
-    pthread_mutex_unlock(p_mutex);
+    pthread_mutex_unlock(p_map_mutex);
 
-    for (size_t i = 0; i < 1000; ++i) {
-        pthread_mutex_lock(p_mutex); // maybe it is useless
-        snake_move_step(p_snake);
-        pthread_mutex_unlock(p_mutex);
+    udp_log("map inited");
+
+    for (int continue_loop = 1; continue_loop; ) {
+        pthread_mutex_lock(p_map_mutex); // maybe it is useless
+        continue_loop = snake_move_step(p_snake);
+        pthread_mutex_unlock(p_map_mutex);
         map_render(p_snake->p_map);
-        usleep(200000); // miliseconds
+        usleep(FRAME_DURATION); // miliseconds
+        pthread_mutex_unlock(p_snake->controls_mutex);
         printf("\x1b[d");
     }
     
+    game_over(p_snake);
+
     map_free(p_snake->p_map);
     snake_free(p_snake);
+
+    udp_log("Все позвільняв");
 
     return 0;
 }
 
-void* key_listener(void* vp_snake) {
+void* controls(void* vp_snake)
+{
+    void* time_to_quit = NULL;
+
     Snake *p_snake = (Snake*) vp_snake;
-    pthread_mutex_t *p_mutex = p_snake->p_map->p_mutex;
+    pthread_mutex_t *p_map_mutex = p_snake->p_map->p_mutex;
     
     char ch_arr[10];
     int ch_i = 0;
@@ -44,36 +59,36 @@ void* key_listener(void* vp_snake) {
  
     while ((direction_i = ch_reader(getch(), &ch_i, &ch_arr)) != -1) {
         switch (direction_i) {
-            case 0:
+            case 0:     // Up
                 press_count ++;
                 snake_add_part(p_snake, -1, 0);
                 break;
-            case 1:
+            case 1:     // Right
                 press_count ++;
                 snake_add_part(p_snake, 0, 1);
                 break;
-            case 2:
+            case 2:     // Down
                 press_count ++;
                 snake_add_part(p_snake, 1, 0);
                 break;
-            case 3:
+            case 3:     // Left
                 press_count ++;
                 snake_add_part(p_snake, 0, -1);
                 break;
-            case 4:
-                map_free(p_snake->p_map);
-                snake_free(p_snake);
-                // exit(1);
+            case 4:     // got 'q', must quit
+                return time_to_quit;
                 break;
             case 404:
                 udp_log("помилка keypress %d pressed %d\n", direction_i, press_count);
                 break;
         }
     }
+    return time_to_quit;
 }
 
 
-static int ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]) { //char * ch_arr) {
+static int ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]) //char * ch_arr)   // if need longer commands
+{
     switch (*ch_i) {
         case 0:
             switch (ch_code) {
@@ -112,7 +127,8 @@ static int ch_reader(int ch_code, int* ch_i, char (*ch_arr)[10]) { //char * ch_a
     return 40400;
 }
 
-static int getch() {
+static int getch()
+{
    struct termios oldtc;
    struct termios newtc;
    int ch;
@@ -120,15 +136,20 @@ static int getch() {
    newtc = oldtc;
    newtc.c_lflag &= ~(ICANON | ECHO);
    tcsetattr(STDIN_FILENO, TCSANOW, &newtc);
-   ch=getchar();
+   ch = getchar();
    tcsetattr(STDIN_FILENO, TCSANOW, &oldtc);
    return ch;
 }
 
+static int game_over(Snake *p_snake)
+{
+    printf("\x1b[d");
+    printf("\x1b[2J");
+    printf("game over");
+}
 
 
 
-
-
-    // printf("\x1b[2J");
-    // printf("\x1b[d");
+// // spacial characters to eraze terminal or move cursor
+// printf("\x1b[2J");
+// printf("\x1b[d");

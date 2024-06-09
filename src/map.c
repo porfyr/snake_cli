@@ -22,11 +22,11 @@ Map* map_new(pthread_mutex_t *p_mutex)
     p_map->buffer = (char **)calloc(height, sizeof(char *));
     p_map->p_mutex = p_mutex;
     if (p_map->buffer == NULL)
-        perror("Помилка виділення пам'яті під буфер");
+        perror("error allocating buffer memory");
     for (size_t i = 0; i < height; ++i) {
         p_map->buffer[i] = (char *)calloc(width, sizeof(char));
         if (p_map->buffer[i] == NULL)
-            perror("Помилка виділення пам'яті під рядок буферу");
+            perror("error allocating buffer line memory");
     }
 
     return p_map;
@@ -37,10 +37,11 @@ static void map_fill(Map *p_map, char chr)
 {
     for (size_t r = 0; r < p_map->height; ++r) {
         // // Щось через наступний рядок при очищенні крашилось
-        // memset(&p_map->buffer[r], chr, p_map->width * sizeof(char));
-        for (size_t c = 0; c < p_map->width; ++c) {
-            p_map->buffer[r][c] = chr;
-        }
+        memset(p_map->buffer[r], chr, p_map->width * sizeof(char));
+        // // older method
+        // for (size_t c = 0; c < p_map->width; ++c) {
+        //     p_map->buffer[r][c] = chr;
+        // }
     }
 }
 
@@ -77,7 +78,6 @@ void map_render(const Map *p_map)
 void map_free(Map *p_map)
 {
     for (size_t i = 0; i < p_map->height; ++i) {
-        udp_log("Звільняєм %ld / %ld", i, p_map->height);
         free(p_map->buffer[i]);
     }
     free(p_map->buffer);

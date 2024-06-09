@@ -1,9 +1,6 @@
 #include "game_arch.h"
 
 
-static int  snake_check_food_collision(const Snake *p_snake, size_t food_r, size_t food_c);
-static void snake_sync_map(const Snake *p_snake);
-
 
 static void choose_init_direction(Snake snake, int *direction_r, int *direction_c) {
     // Тут мало б повертати напрямок протилежний до найближчого краю
@@ -17,12 +14,13 @@ static void choose_init_direction(Snake snake, int *direction_r, int *direction_
 }
 
 
-Snake* snake_new(Map *p_map)
+Snake* snake_new(Map *p_map, pthread_mutex_t *controls_mutex)
 {
-    Snake *p_snake = (Snake *)calloc(1, sizeof(Snake *));
+    Snake *p_snake = (Snake *)malloc(sizeof(Snake));
     udp_log("\n\n\n______________________________\n\nЕкспериментальна ініціалізація");
     p_snake->p_map = p_map;
     int direction_r = 0, direction_c = 0;
+    p_snake->controls_mutex = controls_mutex;
     choose_init_direction(*p_snake, &direction_r, &direction_c);
     snake_add_part(p_snake, direction_r, direction_c);
     snake_map_set_food(p_snake);
@@ -33,6 +31,7 @@ Snake* snake_new(Map *p_map)
 
 int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
 {
+    pthread_mutex_lock(p_snake->controls_mutex);
     Snake_part sp;
     sp.direction[0] = direction_r;
     sp.direction[1] = direction_c;
@@ -48,9 +47,6 @@ int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
         if (ddr == 2 || ddr == 0 || ddr == -2 || ddc == 2 || ddc == 0 || ddc == -2) {
             return -1;
         } else {
-            for (int i = 0; i < 3; ++i) {
-                // snake_map_set_food(p_snake);
-            }
             sp.coords[0] = p_snake->sp_head->data.coords[0];
             sp.coords[1] = p_snake->sp_head->data.coords[1];
             sp.length = 0;
@@ -64,7 +60,6 @@ int snake_add_part(Snake *p_snake, int direction_r, int direction_c)
 
 static int snake_check_food_collision(const Snake *p_snake, size_t food_r, size_t food_c)
 {
-    // udp_log("достукався в провірку колізії");
     int is_collision = 0;
 
     Node *current_sp = p_snake->sp_head;
@@ -81,7 +76,6 @@ static int snake_check_food_collision(const Snake *p_snake, size_t food_r, size_
         }
         current_sp = NULL;
     }
-    // if (is_collision) udp_log("провірку колізії не пройдено");
 
     return is_collision;
 }
@@ -103,49 +97,29 @@ void snake_map_set_food(const Snake *p_snake)
     p_snake->p_map->buffer[rand_row][rand_col] = '*';
 }
 
-
-void snake_move_step(Snake *p_snake)
+static void snake_increase(Snake *p_snake)
 {
-    Node* current_sp = p_snake->sp_head;
-    current_sp->data.coords[0] += current_sp->data.direction[0];
-    current_sp->data.coords[1] += current_sp->data.direction[1];
-    if (p_snake->p_map->buffer[current_sp->data.coords[0]][current_sp->data.coords[1]] == '*') {
-        udp_log("схавав");
-        snake_map_set_food(p_snake);
-    }
-
-    int is_first_part = 1;
-    Node *prev_sp = NULL;
+    Node *current_sp = p_snake->sp_head;
     while (current_sp != NULL) {
-        if (is_first_part) {
-            if (current_sp->next != NULL) {
-                current_sp->data.length ++;
-            }
-            is_first_part = 0;
+        if (current_sp->next == NULL) {
+            ++ current_sp->data.length;
         }
-        // Якщо цей кусок не перший і останній
-        else if (current_sp->next == NULL) {
-            // Якщо цей кусок має довжину 1 й не перший
-            if (current_sp->data.length == 1) {
-
-                p_snake->p_map->buffer[current_sp->data.coords[0]][current_sp->data.coords[1]] = ' ';
-                free(current_sp);
-                current_sp = NULL;
-                prev_sp->next = NULL;
-                break;
-            }
-            else {
-                current_sp->data.length --;
-            }
-        }
-
-        // рух до наступного куска, якщо
-        if (current_sp != NULL) {
-            prev_sp = current_sp;
-            current_sp = current_sp->next;
-        }
+        current_sp = current_sp->next;
     }
-    snake_sync_map(p_snake);
+}
+
+static int check_way(const Snake *p_snake)
+{   
+    size_t r = p_snake->sp_head->data.coords[0];
+    size_t c = p_snake->sp_head->data.coords[1];
+    switch (p_snake->p_map->buffer[r][c]) {
+        case '|':
+        case '-':
+        case '#':
+            return 0;
+        default:
+            return 1;
+    }
 }
 
 
@@ -174,6 +148,51 @@ static void snake_sync_map(const Snake *p_snake)
 
         current_sp = current_sp->next;
     }
+}
+
+
+int snake_move_step(Snake *p_snake)
+{
+    // 1 if all is good, 0 if not so
+    int result = 1;
+    Node* current_sp = p_snake->sp_head;
+    current_sp->data.coords[0] += current_sp->data.direction[0];
+    current_sp->data.coords[1] += current_sp->data.direction[1];
+    result = check_way(p_snake);
+
+    int is_first_part = 1;
+    Node *prev_sp = NULL;
+    while (current_sp != NULL) {
+        if (is_first_part) {
+            if (current_sp->next != NULL) {
+                current_sp->data.length ++;
+            }
+            is_first_part = 0;
+        }
+        // If this part isn't first and is last
+        else if (current_sp->next == NULL) {
+            // If this part has length 1 and isn't first
+            if (current_sp->data.length == 1) {
+
+                p_snake->p_map->buffer[current_sp->data.coords[0]][current_sp->data.coords[1]] = ' ';
+                free(current_sp);
+                current_sp = NULL;
+                prev_sp->next = NULL;
+                break;
+            }
+            else {
+                current_sp->data.length --;
+            }
+        }
+
+        // move to next part if this iteration didn't destroy it
+        if (current_sp != NULL) {
+            prev_sp = current_sp;
+            current_sp = current_sp->next;
+        }
+    }
+    snake_sync_map(p_snake);
+    return result;
 }
 
 
