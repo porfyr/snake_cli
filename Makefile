@@ -1,7 +1,7 @@
 # Main snake program
 
 CC = gcc
-CFLAGS = -Wall -Wno-unused-variable -Wno-unused-function -Wno-main # -lcurses # -Wextra -g
+CFLAGS = -Wall -Wno-unused-variable -Wno-unused-function -Wno-main #-std=c99 # -lcurses # -Wextra -g
 SRC_DIR = ./src
 OBJ_DIR = ./obj
 BIN_DIR = ./bin
@@ -10,7 +10,7 @@ TARGET = $(BIN_DIR)/snake_c
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
-all: $(BIN_DIR) $(TARGET) $(OBJ_DIR)
+all: $(OBJ_DIR) $(BIN_DIR) $(TARGET)
 
 $(BIN_DIR):
 	mkdir $(BIN_DIR)

@@ -33,7 +33,7 @@ typedef struct Node {
 
 typedef struct {
     Map*  p_map;
-    Node *sp_head;   // sp - snake part - linked list node
+    Node* sp_head;   // sp - snake part - linked list node
     int scores;     // no score counting
     pthread_mutex_t *controls_mutex;
     int still_playing;
